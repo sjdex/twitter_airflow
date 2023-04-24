@@ -1,0 +1,53 @@
+create or replace storage integration s3_int
+  TYPE = EXTERNAL_STAGE
+  STORAGE_PROVIDER = S3
+  ENABLED = TRUE 
+  STORAGE_AWS_ROLE_ARN = 'arn:aws:iam::279822004300:role/s3-snowflake-role'
+  STORAGE_ALLOWED_LOCATIONS = ('s3://dexter-twitter-transformed-data/tweets/')
+   COMMENT = 'This an optional comment' ;
+
+
+DESC integration s3_int
+
+CREATE OR REPLACE file format csv_file_format
+    type='csv'
+    field_delimiter=','
+    skip_header=1
+
+CREATE OR replace STAGE twitter_stage
+    url='s3://dexter-twitter-transformed-data/tweets/'
+    STORAGE_INTEGRATION=s3_int
+    FILE_FORMAT=TWITTER.TWITTER_DE.CSV_FILE_FORMAT
+
+DROP STAGE twitter_stage
+
+LIST @TWITTER.TWITTER_DE.TWITTER_STAGE
+
+
+USE TWITTER;
+CREATE SCHEMA IF NOT EXISTS twitter_de;
+
+CREATE TABLE IF NOT EXISTS tweets(
+            user STRING,
+            tweet_id BIGINT,
+            language STRING,
+            source STRING,
+            likes INT,
+            retweets INT,
+            date DATE
+        )
+DROP TABLE tweets
+        
+DESC TABLE tweets
+
+SELECT count(*) FROM tweets
+
+TRUNCATE TABLE tweets
+
+DROP STAGE twitter_stage
+
+CREATE OR replace STAGE twitter_stage
+    url='s3://dexter-twitter-transformed-data/tweets/'
+    FILE_FORMAT=TWITTER.TWITTER_DE.CSV_FILE_FORMAT
+
+LIST @TWITTER.TWITTER_DE.TWITTER_STAGE
